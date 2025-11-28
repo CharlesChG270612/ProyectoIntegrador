@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function Interfaz_Inicio() {
+  const [pressedCard, setPressedCard] = useState(null);
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <LinearGradient
@@ -37,31 +39,68 @@ export default function Interfaz_Inicio() {
           {/* MATERIAS DEL DÍA */}
           <Text style={styles.sectionTitle}>Materias del día</Text>
 
-          <View style={styles.cardContainer}>
-            <TouchableOpacity style={styles.card}>
-              <Image
-                source={require("../assets/iconos/carlos.png")}
-                style={styles.cardImage}
-              />
-              <Text style={styles.cardTitle}>Cálculo diferencial</Text>
-            </TouchableOpacity>
+          {/* CARD 1 */}
+          <TouchableOpacity
+            style={styles.card}
+            onPressIn={() => setPressedCard(1)}
+            onPressOut={() => setPressedCard(null)}
+          >
+            <Image
+              source={require("../assets/iconos/carlos.png")}
+              style={styles.cardImage}
+            />
+            <Text style={styles.cardTitle}>Cálculo diferencial</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity style={styles.card}>
-              <Image
-                source={require("../assets/iconos/maria.png")}
-                style={styles.cardImage}
-              />
-              <Text style={styles.cardTitle}>Biología</Text>
-            </TouchableOpacity>
+          {pressedCard === 1 && (
+            <View style={styles.descriptionBox}>
+              <Text style={styles.descriptionText}>
+                Estudia límites, derivadas y el cambio de una función respecto al tiempo.
+              </Text>
+            </View>
+          )}
 
-            <TouchableOpacity style={styles.card}>
-              <Image
-                source={require("../assets/iconos/pedro.png")}
-                style={styles.cardImage}
-              />
-              <Text style={styles.cardTitle}>Álgebra</Text>
-            </TouchableOpacity>
-          </View>
+          {/* CARD 2 */}
+          <TouchableOpacity
+            style={styles.card}
+            onPressIn={() => setPressedCard(2)}
+            onPressOut={() => setPressedCard(null)}
+          >
+            <Image
+              source={require("../assets/iconos/maria.png")}
+              style={styles.cardImage}
+            />
+            <Text style={styles.cardTitle}>Biología</Text>
+          </TouchableOpacity>
+
+          {pressedCard === 2 && (
+            <View style={styles.descriptionBox}>
+              <Text style={styles.descriptionText}>
+                Analiza la estructura, evolución y funcionamiento de los seres vivos.
+              </Text>
+            </View>
+          )}
+
+          {/* CARD 3 */}
+          <TouchableOpacity
+            style={styles.card}
+            onPressIn={() => setPressedCard(3)}
+            onPressOut={() => setPressedCard(null)}
+          >
+            <Image
+              source={require("../assets/iconos/pedro.png")}
+              style={styles.cardImage}
+            />
+            <Text style={styles.cardTitle}>Álgebra</Text>
+          </TouchableOpacity>
+
+          {pressedCard === 3 && (
+            <View style={styles.descriptionBox}>
+              <Text style={styles.descriptionText}>
+                Se enfoca en ecuaciones, expresiones y métodos matemáticos.
+              </Text>
+            </View>
+          )}
 
           {/* SEGUIR VIENDO */}
           <Text style={styles.sectionTitle}>Seguir viendo</Text>
@@ -85,7 +124,7 @@ export default function Interfaz_Inicio() {
               />
               <View>
                 <Text style={styles.smallCardTitle}>Cálculo II</Text>
-                <Text style={styles.smallCardSubtitle}>Ejercicios 12-15</Text>
+                <Text style={styles.smallCardSubtitle}>Ejercicios 12–15</Text>
               </View>
             </View>
           </View>
@@ -131,32 +170,43 @@ const styles = StyleSheet.create({
     color: "#000",
     marginBottom: 15,
   },
-  cardContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 35,
-  },
+
   card: {
-    width: "30%",
+    width: "100%",
     backgroundColor: "#fff",
     borderRadius: 15,
+    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 15,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
     elevation: 3,
+    marginBottom: 10,
   },
   cardImage: {
     width: 55,
     height: 55,
-    marginBottom: 10,
+    marginRight: 15,
   },
   cardTitle: {
-    textAlign: "center",
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: "600",
     color: "#000",
   },
+
+  descriptionBox: {
+    backgroundColor: "#ffffffdd",
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+  descriptionText: {
+    color: "#333",
+    fontSize: 14,
+  },
+
   smallCardContainer: {
     marginBottom: 30,
+    marginTop: 10,
   },
   smallCard: {
     flexDirection: "row",
