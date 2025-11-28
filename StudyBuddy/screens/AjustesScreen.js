@@ -16,7 +16,7 @@ export default function AjustesScreen() {
 
       <View style={styles.imageContainer}>
         <Image
-          source={{ uri: "https://cdn-icons-png.flaticon.com/512/616/616408.png" }} // puedes reemplazar con tu imagen
+          source={require("../assets/iconos/carlos.png")}
           style={styles.avatar}
         />
         <TouchableOpacity style={styles.addIcon}>
@@ -45,29 +45,7 @@ export default function AjustesScreen() {
         />
       </View>
 
-      {/* Barra inferior */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="flame-outline" size={24} color="#000" />
-          <Text style={styles.navText}>Tendencias</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="chatbubble-outline" size={24} color="#000" />
-          <Text style={styles.navText}>Chats</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="home-outline" size={24} color="#000" />
-          <Text style={styles.navText}>Inicio</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="heart-outline" size={24} color="#000" />
-          <Text style={styles.navText}>Matching</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="settings" size={24} color="#00aaff" />
-          <Text style={[styles.navText, { color: "#00aaff" }]}>Ajustes</Text>
-        </TouchableOpacity>
-      </View>
+      
     </SafeAreaView>
   );
 }

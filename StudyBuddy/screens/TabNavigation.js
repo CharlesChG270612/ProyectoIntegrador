@@ -6,6 +6,7 @@ import InicioScreen from "./Interfaz_Inicio";
 import ChatsScreen from "./Interfaz_Chats";
 import MatchingScreen from "./MatchingScreen";
 import AjustesScreen from "./AjustesScreen";
+import TendenciasScreen from "./Tendencias";
 
 const Tab = createBottomTabNavigator();
 
@@ -23,6 +24,7 @@ export default function TabNavigation() {
         },
 
         tabBarIcon: ({ color, size }) => {
+          if (route.name === "Tendencias") return <Ionicons name="trending-up-outline" size={28} color={color} />;
           if (route.name === "Inicio") return <Ionicons name="home" size={28} color={color} />;
           if (route.name === "Chats") return <Ionicons name="chatbubbles" size={28} color={color} />;
           if (route.name === "Matching") return <Ionicons name="heart" size={28} color={color} />;
@@ -30,6 +32,7 @@ export default function TabNavigation() {
         },
       })}
     >
+      <Tab.Screen name="Tendencias" component={TendenciasScreen} />
       <Tab.Screen name="Chats" component={ChatsScreen} />
       <Tab.Screen name="Inicio" component={InicioScreen} />
       <Tab.Screen name="Matching" component={MatchingScreen} />
