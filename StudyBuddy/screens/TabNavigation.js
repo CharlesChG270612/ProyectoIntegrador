@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 
 import InicioScreen from "./Interfaz_Inicio";
-import ChatsScreen from "./ChatsScreen";
+import ChatsScreen from "./Interfaz_Chats";
 import MatchingScreen from "./MatchingScreen";
 import AjustesScreen from "./AjustesScreen";
 
@@ -17,9 +17,9 @@ export default function TabNavigation() {
         tabBarActiveTintColor: "#0099CC",
         tabBarInactiveTintColor: "#777",
         tabBarStyle: {
-          height: 65,
+          height: 80,
           paddingBottom: 8,
-          paddingTop: 8,
+          paddingTop: 0,
         },
 
         tabBarIcon: ({ color, size }) => {
@@ -30,8 +30,8 @@ export default function TabNavigation() {
         },
       })}
     >
-      <Tab.Screen name="Inicio" component={InicioScreen} />
       <Tab.Screen name="Chats" component={ChatsScreen} />
+      <Tab.Screen name="Inicio" component={InicioScreen} />
       <Tab.Screen name="Matching" component={MatchingScreen} />
       <Tab.Screen name="Ajustes" component={AjustesScreen} />
     </Tab.Navigator>
