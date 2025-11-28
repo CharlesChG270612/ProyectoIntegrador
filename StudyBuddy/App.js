@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import SplashScreen from "./screens/SplashScreen";
@@ -7,13 +7,28 @@ import Interfaz_Registrarse from "./screens/Interfaz_Registrarse";
 import RecuperarPasswordScreen from "./screens/RecuperarPasswordScreen"
 import TabNavigation from "./screens/TabNavigation";
 
+// Importar inicializador de BD
+import { initDatabase } from "./database/Database";
+import { TendenciaController } from "./controllers/TendenciaController";
+
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  
+  // Inicializar Base de Datos al arrancar la App
+  useEffect(() => {
+    const setupDB = async () => {
+      await initDatabase();
+      // Opcional: Insertar datos de prueba si está vacía
+      await TendenciaController.seedDatosIniciales();
+    };
+    
+    setupDB();
+  }, []);
+
   return (
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
-
           <Stack.Screen name="Splash" component={SplashScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Registro" component={Interfaz_Registrarse} />

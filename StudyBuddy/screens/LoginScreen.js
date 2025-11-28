@@ -11,17 +11,35 @@ import {
   Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { UserController } from "../controllers/UserController";
 
 export default function LoginScreen({ navigation }) {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!usuario.trim() || !password.trim()) {
       Alert.alert("Error", "Completa Usuario y Contraseña.");
       return;
     }
-    navigation.replace("Tabs");
+
+    setLoading(true);
+    try {
+      const result = await UserController.login(usuario, password);
+      
+      if (result.success) {
+        // Login exitoso
+        console.log("Usuario logueado:", result.user);
+        navigation.replace("Tabs");
+      } else {
+        Alert.alert("Error de acceso", result.message);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Ocurrió un problema inesperado.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,8 +80,12 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
             </Pressable>
 
-            <Pressable style={styles.button} onPress={handleLogin}>
-              <Text style={styles.buttonText}>Entrar</Text>
+            <Pressable 
+              style={[styles.button, loading && styles.buttonDisabled]} 
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>{loading ? "Verificando..." : "Entrar"}</Text>
             </Pressable>
 
             <Pressable
@@ -132,6 +154,9 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     alignItems: "center",
     marginBottom: 15,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   secondaryButton: {
     backgroundColor: "#00D6D6",
