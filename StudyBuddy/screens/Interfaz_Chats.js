@@ -26,13 +26,11 @@ export default function Interfaz_Chats() {
           style={{ flex: 1 }}
         >
           <View style={styles.container}>
-            {/* Header */}
             <View style={styles.header}>
               <Text style={styles.headerTitle}>Chat Grupal</Text>
             </View>
 
             <ScrollView style={styles.chatArea}>
-              {/* Mensaje izquierdo */}
               <View style={styles.rowLeft}>
                 <Image
                   source={{ uri: "https://i.pravatar.cc/50?img=1" }}
@@ -48,7 +46,6 @@ export default function Interfaz_Chats() {
                 </View>
               </View>
 
-              {/* Mensaje derecho */}
               <View style={styles.rowRight}>
                 <View style={styles.messageBoxRight}>
                   <Text style={styles.messageTitle}>Cálculo Integral</Text>
@@ -65,7 +62,6 @@ export default function Interfaz_Chats() {
                 />
               </View>
 
-              {/* Mensaje izquierdo */}
               <View style={styles.rowLeft}>
                 <Image
                   source={{ uri: "https://i.pravatar.cc/50?img=1" }}
