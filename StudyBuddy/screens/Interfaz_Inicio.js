@@ -1,14 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  SafeAreaView,
-} from "react-native";
+import { View, Text, StyleSheet, TextInput, ScrollView, Image, TouchableOpacity, SafeAreaView,} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -23,10 +14,8 @@ export default function Interfaz_Inicio() {
       >
         <ScrollView contentContainerStyle={styles.container}>
 
-          {/* TÍTULO */}
           <Text style={styles.title}>Inicio</Text>
 
-          {/* BUSCADOR */}
           <View style={styles.searchContainer}>
             <Ionicons name="search" size={22} color="#555" />
             <TextInput
@@ -36,10 +25,8 @@ export default function Interfaz_Inicio() {
             />
           </View>
 
-          {/* MATERIAS DEL DÍA */}
           <Text style={styles.sectionTitle}>Materias del día</Text>
 
-          {/* CARD 1 */}
           <TouchableOpacity
             style={styles.card}
             onPressIn={() => setPressedCard(1)}
@@ -60,7 +47,6 @@ export default function Interfaz_Inicio() {
             </View>
           )}
 
-          {/* CARD 2 */}
           <TouchableOpacity
             style={styles.card}
             onPressIn={() => setPressedCard(2)}
@@ -81,7 +67,6 @@ export default function Interfaz_Inicio() {
             </View>
           )}
 
-          {/* CARD 3 */}
           <TouchableOpacity
             style={styles.card}
             onPressIn={() => setPressedCard(3)}
@@ -102,7 +87,6 @@ export default function Interfaz_Inicio() {
             </View>
           )}
 
-          {/* SEGUIR VIENDO */}
           <Text style={styles.sectionTitle}>Seguir viendo</Text>
 
           <View style={styles.smallCardContainer}>
