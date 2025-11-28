@@ -11,8 +11,8 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
-
 import { LinearGradient } from "expo-linear-gradient";
+import { UserController } from "../controllers/UserController";
 
 export default function Interfaz_Registrarse({ navigation }) {
   const [usuario, setUsuario] = useState("");
@@ -20,45 +20,44 @@ export default function Interfaz_Registrarse({ navigation }) {
   const [password, setPassword] = useState("");
   const [cargando, setCargando] = useState(false);
 
-  const handleRegistro = () => {
+  const handleRegistro = async () => {
+    // Validaciones básicas
     if (!usuario.trim()) {
       Alert.alert("Falta información", "Ingresa un nombre de usuario.");
       return;
     }
-
     if (!email.trim()) {
       Alert.alert("Falta información", "Ingresa un correo electrónico.");
       return;
     }
-
-    const regexEmail =
-      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
+    const regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!regexEmail.test(email)) {
       Alert.alert("Correo inválido", "Ingresa un correo electrónico válido.");
       return;
     }
-
-    if (!password.trim()) {
-      Alert.alert("Falta información", "Ingresa una contraseña.");
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert(
-        "Contraseña débil",
-        "La contraseña debe tener al menos 6 caracteres."
-      );
+    if (!password.trim() || password.length < 6) {
+      Alert.alert("Contraseña débil", "La contraseña debe tener al menos 6 caracteres.");
       return;
     }
 
     setCargando(true);
 
-    setTimeout(() => {
+    try {
+      // Llamada al controlador
+      const result = await UserController.registrar(usuario, email, password);
+
+      if (result.success) {
+        Alert.alert("¡Éxito!", "Tu cuenta ha sido creada. Ahora inicia sesión.", [
+          { text: "OK", onPress: () => navigation.replace("Login") }
+        ]);
+      } else {
+        Alert.alert("Error al registrar", result.message);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Hubo un problema técnico al intentar registrarte.");
+    } finally {
       setCargando(false);
-      Alert.alert("Registrado", "Tu cuenta ha sido creada exitosamente.");
-      navigation.replace("Login");
-    }, 3000);
+    }
   };
 
   return (
@@ -94,6 +93,7 @@ export default function Interfaz_Registrarse({ navigation }) {
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
+              keyboardType="email-address"
             />
 
             <Text style={styles.label}>Contraseña</Text>
@@ -109,21 +109,19 @@ export default function Interfaz_Registrarse({ navigation }) {
             {cargando ? (
               <View style={{ alignItems: "center", marginTop: 10 }}>
                 <ActivityIndicator size="large" color="#00C6FB" />
-                <Text style={{ marginTop: 10, fontSize: 16 }}>
-                  Creando cuenta...
-                </Text>
+                <Text style={{ marginTop: 10, fontSize: 16 }}>Creando cuenta...</Text>
               </View>
             ) : (
               <>
                 <Pressable style={styles.button} onPress={handleRegistro}>
-                  <Text style={styles.buttonText}>Entrar</Text>
+                  <Text style={styles.buttonText}>Registrarse</Text>
                 </Pressable>
 
                 <Pressable
                   style={[styles.button, styles.buttonSalir]}
                   onPress={() => navigation.replace("Login")}
                 >
-                  <Text style={styles.buttonText}>Salir</Text>
+                  <Text style={styles.buttonText}>Volver al Login</Text>
                 </Pressable>
               </>
             )}
@@ -190,48 +188,5 @@ const styles = StyleSheet.create({
     color: "#000",
     fontSize: 18,
     fontWeight: "bold",
-  },
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-    alignItems: "center",
-    paddingTop: 60,
-  },
-  form: {
-    width: "85%",
-  },
-  label: {
-    fontSize: 16,
-    color: "#000",
-    marginBottom: 6,
-  },
-  input: {
-    width: "100%",
-    backgroundColor: "#fff",
-    height: 45,
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    marginBottom: 20,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: "#00C4CC",
-    paddingVertical: 12,
-    borderRadius: 25,
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  secondaryButton: {
-    backgroundColor: "#00D6D6",
-  },
-  exitButton: {
-    backgroundColor: "#00B2B2",
-  },
-  buttonText: {
-    color: "#000",
-    fontSize: 18,
-    fontWeight: "600",
   },
 });
