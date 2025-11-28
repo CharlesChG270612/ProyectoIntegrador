@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,11 +12,22 @@ import {
   TextInput,
   Alert,
   Pressable,
+  Dimensions,
+  Platform,
+  StatusBar,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { TendenciaController } from "../controllers/TendenciaController";
+
+// 1. SOLUCIÓN IMÁGENES: Mapeamos el string de la BD al recurso real
+const ASSET_MAP = {
+  "carlos.png": require("../assets/iconos/carlos.png"),
+  "maria.png": require("../assets/iconos/maria.png"),
+  "pedro.png": require("../assets/iconos/pedro.png"),
+  "buddy.png": require("../assets/iconos/buddy.png"),
+};
 
 export default function TendenciasScreen() {
   const [estudiantes, setEstudiantes] = useState([]);
@@ -25,46 +36,46 @@ export default function TendenciasScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
 
-  // Estado para formulario de creación
+  // Estados para formularios
   const [newItem, setNewItem] = useState({
     titulo: "",
     subtitulo: "",
     tipo: "tema",
-    porcentaje: "0",
-    miembros: "0",
+    porcentaje: "",
+    miembros: "",
   });
-
-  // Estado para edición
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // CARGAR DATOS (READ)
+  // --- CARGAR DATOS ---
   const cargarDatos = async () => {
-    const allData = await TendenciaController.getAll();
-    if (allData.success) {
-      setEstudiantes(allData.data.filter((i) => i.tipo === "estudiante"));
-      setTemas(allData.data.filter((i) => i.tipo === "tema"));
-      setRetos(allData.data.filter((i) => i.tipo === "reto"));
+    try {
+      const allData = await TendenciaController.getAll();
+      if (allData.success) {
+        setEstudiantes(allData.data.filter((i) => i.tipo === "estudiante"));
+        setTemas(allData.data.filter((i) => i.tipo === "tema"));
+        setRetos(allData.data.filter((i) => i.tipo === "reto"));
+      }
+    } catch (error) {
+      console.error("Error cargando tendencias:", error);
     }
   };
 
-  // Recargar datos cada vez que la pantalla obtiene el foco
   useFocusEffect(
     useCallback(() => {
       cargarDatos();
     }, [])
   );
 
-  // CREAR (CREATE)
+  // --- CREAR ---
   const handleCreate = async () => {
-    if (!newItem.titulo) {
-      Alert.alert("Error", "El título es obligatorio");
+    if (!newItem.titulo.trim()) {
+      Alert.alert("Atención", "El título es obligatorio");
       return;
     }
 
-    // Asignar imagen o color por defecto según tipo para que no se vea vacío
     let imgSource = "";
-    if (newItem.tipo === "estudiante") imgSource = "buddy.png"; // Default fallback
-    if (newItem.tipo === "reto") imgSource = "#FFD166"; // Default color
+    if (newItem.tipo === "estudiante") imgSource = "buddy.png";
+    if (newItem.tipo === "reto") imgSource = "#FFD166"; // Color hexadecimal
 
     const result = await TendenciaController.create(
       newItem.titulo,
@@ -81,80 +92,71 @@ export default function TendenciasScreen() {
         titulo: "",
         subtitulo: "",
         tipo: "tema",
-        porcentaje: "0",
-        miembros: "0",
+        porcentaje: "",
+        miembros: "",
       });
       cargarDatos();
     } else {
-      Alert.alert("Error", "No se pudo crear el elemento");
+      Alert.alert("Error", "No se pudo crear.");
     }
   };
 
-  // ACTUALIZAR (UPDATE)
+  // --- ACTUALIZAR ---
   const handleUpdate = async () => {
-    if (!selectedItem.titulo) return;
-
+    if (!selectedItem?.titulo) return;
     const result = await TendenciaController.update(
       selectedItem.id,
       selectedItem.titulo,
       parseInt(selectedItem.porcentaje) || 0
     );
-
     if (result.success) {
       setEditModalVisible(false);
       setSelectedItem(null);
       cargarDatos();
-    } else {
-      Alert.alert("Error", "No se pudo actualizar");
     }
   };
 
-  // ELIMINAR (DELETE)
+  // --- ELIMINAR ---
   const handleDelete = (id) => {
-    Alert.alert(
-      "Eliminar",
-      "¿Estás seguro de que quieres eliminar este elemento?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            await TendenciaController.delete(id);
-            cargarDatos();
-          },
+    Alert.alert("Eliminar", "¿Estás seguro?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Eliminar",
+        style: "destructive",
+        onPress: async () => {
+          await TendenciaController.delete(id);
+          cargarDatos();
         },
-      ]
-    );
+      },
+    ]);
   };
 
-  // Preparar edición
-  const openEditModal = (item) => {
-    setSelectedItem({ ...item, porcentaje: item.porcentaje.toString() });
-    setEditModalVisible(true);
-  };
+  // Helper para imágenes
+  const getImageSource = (imgString) =>
+    ASSET_MAP[imgString] || ASSET_MAP["buddy.png"];
 
-  // RENDERIZADO DE ITEMS
+  // --- RENDERS ---
   const renderEstudiante = ({ item }) => (
     <TouchableOpacity
-      style={styles.studentCard}
+      style={styles.cardEstudiante}
       onLongPress={() => handleDelete(item.id)}
+      activeOpacity={0.9}
     >
-      {/* Fallback simple para imágenes locales vs strings */}
-      <Image
-        source={
-          typeof item.imgSource === "number"
-            ? item.imgSource
-            : require("../assets/iconos/buddy.png")
-        }
-        style={styles.studentImage}
-      />
-      <View style={styles.studentInfo}>
-        <Text style={styles.studentName}>{item.titulo}</Text>
-        <Text style={styles.studentSubtext}>{item.subtitulo}</Text>
+      <View style={styles.imgContainer}>
+        <Image
+          source={getImageSource(item.imgSource)}
+          style={styles.studentImage}
+        />
+        <View style={styles.onlineBadge} />
       </View>
-      <TouchableOpacity style={styles.connectButton}>
-        <Text style={styles.connectButtonText}>Conectar</Text>
+      <Text style={styles.studentName} numberOfLines={1}>
+        {item.titulo}
+      </Text>
+      <Text style={styles.studentCareer} numberOfLines={1}>
+        {item.subtitulo}
+      </Text>
+      <TouchableOpacity style={styles.btnConnect}>
+        <Text style={styles.btnConnectText}>Conectar</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -162,466 +164,445 @@ export default function TendenciasScreen() {
   const renderTema = (item) => (
     <TouchableOpacity
       key={item.id}
-      style={styles.topicContainer}
-      onPress={() => openEditModal(item)}
+      style={styles.cardTema}
+      onPress={() => {
+        setSelectedItem({ ...item, porcentaje: item.porcentaje.toString() });
+        setEditModalVisible(true);
+      }}
       onLongPress={() => handleDelete(item.id)}
     >
-      <View style={styles.topicHeader}>
-        <Text style={styles.topicTitle}>{item.titulo}</Text>
-        <Text style={styles.topicPercent}>{item.porcentaje}%</Text>
+      <View style={styles.temaIcon}>
+        <Ionicons name="book" size={20} color="#0099CC" />
       </View>
-      <View style={styles.progressBarBackground}>
-        <LinearGradient
-          colors={["#00FFD1", "#0099CC"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={[styles.progressBarFill, { width: `${item.porcentaje}%` }]}
-        />
+      <View style={{ flex: 1, marginLeft: 12 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: 6,
+          }}
+        >
+          <Text style={styles.temaTitle}>{item.titulo}</Text>
+          <Text style={styles.temaPercent}>{item.porcentaje}%</Text>
+        </View>
+        <View style={styles.progressBg}>
+          <LinearGradient
+            colors={["#00FFD1", "#0099CC"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[
+              styles.progressFill,
+              { width: `${Math.min(item.porcentaje, 100)}%` },
+            ]}
+          />
+        </View>
       </View>
     </TouchableOpacity>
   );
 
-  const renderReto = ({ item }) => (
-    <TouchableOpacity
-      style={styles.challengeCard}
-      onLongPress={() => handleDelete(item.id)}
-    >
-      <View
-        style={[
-          styles.challengeIconContainer,
-          {
-            backgroundColor: item.imgSource.startsWith("#")
-              ? item.imgSource
-              : "#96CEB4",
-          },
-        ]}
+  const renderReto = ({ item }) => {
+    const bg = item.imgSource?.startsWith("#") ? item.imgSource : "#FF6B6B";
+    return (
+      <TouchableOpacity
+        style={[styles.cardReto, { backgroundColor: bg }]}
+        onLongPress={() => handleDelete(item.id)}
       >
-        <Ionicons name="trophy" size={24} color="#fff" />
-      </View>
-      <Text style={styles.challengeTitle} numberOfLines={2}>
-        {item.titulo}
-      </Text>
-      <View style={styles.challengeFooter}>
-        <Text style={styles.challengeMembers}>{item.miembros} miembros</Text>
-        <TouchableOpacity style={styles.joinButton}>
-          <Text style={styles.joinButtonText}>Unirme</Text>
+        <View style={styles.retoTop}>
+          <Ionicons name="trophy" size={20} color="rgba(255,255,255,0.8)" />
+          <Text style={styles.retoMembers}>{item.miembros} 🔥</Text>
+        </View>
+        <Text style={styles.retoTitle} numberOfLines={2}>
+          {item.titulo}
+        </Text>
+        <TouchableOpacity style={styles.btnJoin}>
+          <Text style={[styles.btnJoinText, { color: bg }]}>Unirme</Text>
         </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <LinearGradient colors={["#00FFD1", "#0099CC"]} style={styles.gradient}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <Text style={styles.appTitle}>Tendencias</Text>
-          <View style={{ flexDirection: "row" }}>
-            <TouchableOpacity
-              onPress={() => setModalVisible(true)}
-              style={{ marginRight: 15 }}
-            >
-              <Ionicons name="add-circle-outline" size={32} color="#000" />
-            </TouchableOpacity>
-            <Ionicons name="notifications-outline" size={28} color="#000" />
+    <View style={{ flex: 1, backgroundColor: "#F2F6F9" }}>
+      <StatusBar barStyle="light-content" />
+      <LinearGradient
+        colors={["#00FFD1", "#0099CC"]}
+        style={styles.headerGradient}
+      >
+        <SafeAreaView>
+          <View style={styles.headerContent}>
+            <View>
+              <Text style={styles.headerSubtitle}>Descubre</Text>
+              <Text style={styles.headerTitle}>Tendencias</Text>
+            </View>
+            <View style={{ flexDirection: "row" }}>
+              <TouchableOpacity
+                style={styles.iconBtn}
+                onPress={() => setModalVisible(true)}
+              >
+                <Ionicons name="add" size={28} color="#0099CC" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Estudiantes */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Compañeros populares</Text>
+            <Text style={styles.link}>Ver todos</Text>
+          </View>
+          <FlatList
+            data={estudiantes}
+            renderItem={renderEstudiante}
+            keyExtractor={(i) => i.id.toString()}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20 }}
+            ListEmptyComponent={
+              <Text style={styles.empty}>Sin estudiantes.</Text>
+            }
+          />
+        </View>
+
+        {/* Temas */}
+        <View style={styles.section}>
+          <Text
+            style={[styles.sectionTitle, { marginLeft: 20, marginBottom: 15 }]}
+          >
+            Tendencias de estudio
+          </Text>
+          <View style={{ paddingHorizontal: 20 }}>
+            {temas.length > 0 ? (
+              temas.map(renderTema)
+            ) : (
+              <Text style={styles.empty}>Sin temas.</Text>
+            )}
           </View>
         </View>
 
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* SECCIÓN 1: ESTUDIANTES POPULARES */}
-          <View style={styles.sectionContainer}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Estudiantes populares</Text>
-              <TouchableOpacity>
-                <Text style={styles.seeAllText}>Ver todo</Text>
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={estudiantes}
-              renderItem={renderEstudiante}
-              keyExtractor={(item) => item.id.toString()}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalList}
-              ListEmptyComponent={
-                <Text style={styles.emptyText}>No hay estudiantes aún.</Text>
-              }
-            />
-          </View>
+        {/* Retos */}
+        <View style={styles.section}>
+          <Text
+            style={[styles.sectionTitle, { marginLeft: 20, marginBottom: 15 }]}
+          >
+            Retos activos
+          </Text>
+          <FlatList
+            data={retos}
+            renderItem={renderReto}
+            keyExtractor={(i) => i.id.toString()}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20 }}
+            ListEmptyComponent={<Text style={styles.empty}>Sin retos.</Text>}
+          />
+        </View>
+      </ScrollView>
 
-          {/* SECCIÓN 2: TEMAS MÁS BUSCADOS */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Temas más buscados</Text>
-            <Text style={styles.hintText}>
-              (Toca para editar, mantén para borrar)
-            </Text>
-            <View style={styles.topicsList}>
-              {temas.length > 0 ? (
-                temas.map(renderTema)
-              ) : (
-                <Text style={styles.emptyText}>Agrega un tema nuevo.</Text>
-              )}
-            </View>
-          </View>
-
-          {/* SECCIÓN 3: ÚNETE A UN RETO */}
-          <View style={[styles.sectionContainer, { marginBottom: 20 }]}>
-            <Text style={styles.sectionTitle}>Únete a un reto</Text>
-            <FlatList
-              data={retos}
-              renderItem={renderReto}
-              keyExtractor={(item) => item.id.toString()}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalList}
-              ListEmptyComponent={
-                <Text style={styles.emptyText}>No hay retos activos.</Text>
-              }
-            />
-          </View>
-        </ScrollView>
-
-        {/* MODAL CREAR */}
-        <Modal animationType="slide" transparent={true} visible={modalVisible}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Nuevo Elemento</Text>
-
-              <Text style={styles.label}>Tipo:</Text>
-              <View style={styles.typeSelector}>
-                {["tema", "reto", "estudiante"].map((t) => (
-                  <TouchableOpacity
-                    key={t}
+      {/* MODAL CREAR */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Crear Nuevo</Text>
+            <View style={styles.typeRow}>
+              {["tema", "reto", "estudiante"].map((t) => (
+                <Pressable
+                  key={t}
+                  style={[
+                    styles.typePill,
+                    newItem.tipo === t && styles.typePillActive,
+                  ]}
+                  onPress={() => setNewItem({ ...newItem, tipo: t })}
+                >
+                  <Text
                     style={[
-                      styles.typeBtn,
-                      newItem.tipo === t && styles.typeBtnActive,
+                      styles.typeText,
+                      newItem.tipo === t && styles.typeTextActive,
                     ]}
-                    onPress={() => setNewItem({ ...newItem, tipo: t })}
                   >
-                    <Text
-                      style={[
-                        styles.typeText,
-                        newItem.tipo === t && styles.typeTextActive,
-                      ]}
-                    >
-                      {t.charAt(0).toUpperCase() + t.slice(1)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <TextInput
-                placeholder="Título / Nombre"
-                style={styles.input}
-                value={newItem.titulo}
-                onChangeText={(text) =>
-                  setNewItem({ ...newItem, titulo: text })
-                }
-              />
-
-              {newItem.tipo === "estudiante" && (
-                <TextInput
-                  placeholder="Carrera / Subtítulo"
-                  style={styles.input}
-                  value={newItem.subtitulo}
-                  onChangeText={(text) =>
-                    setNewItem({ ...newItem, subtitulo: text })
-                  }
-                />
-              )}
-
-              {newItem.tipo === "tema" && (
-                <TextInput
-                  placeholder="Porcentaje (0-100)"
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={newItem.porcentaje}
-                  onChangeText={(text) =>
-                    setNewItem({ ...newItem, porcentaje: text })
-                  }
-                />
-              )}
-
-              {newItem.tipo === "reto" && (
-                <TextInput
-                  placeholder="Miembros iniciales"
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={newItem.miembros}
-                  onChangeText={(text) =>
-                    setNewItem({ ...newItem, miembros: text })
-                  }
-                />
-              )}
-
-              <View style={styles.modalButtons}>
-                <Pressable
-                  style={[styles.btn, styles.btnCancel]}
-                  onPress={() => setModalVisible(false)}
-                >
-                  <Text>Cancelar</Text>
+                    {t.toUpperCase()}
+                  </Text>
                 </Pressable>
-                <Pressable
-                  style={[styles.btn, styles.btnConfirm]}
-                  onPress={handleCreate}
-                >
-                  <Text style={{ color: "#fff" }}>Crear</Text>
-                </Pressable>
-              </View>
+              ))}
             </View>
-          </View>
-        </Modal>
-
-        {/* MODAL EDITAR (Solo para Temas por simplicidad) */}
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={editModalVisible}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Editar Tema</Text>
-
+            <TextInput
+              style={styles.input}
+              placeholder="Título"
+              value={newItem.titulo}
+              onChangeText={(t) => setNewItem({ ...newItem, titulo: t })}
+            />
+            {newItem.tipo === "estudiante" && (
               <TextInput
                 style={styles.input}
-                value={selectedItem?.titulo}
-                onChangeText={(text) =>
-                  setSelectedItem({ ...selectedItem, titulo: text })
-                }
+                placeholder="Carrera"
+                value={newItem.subtitulo}
+                onChangeText={(t) => setNewItem({ ...newItem, subtitulo: t })}
               />
-
-              <Text style={styles.label}>
-                Porcentaje: {selectedItem?.porcentaje}%
-              </Text>
+            )}
+            {newItem.tipo === "tema" && (
               <TextInput
                 style={styles.input}
+                placeholder="Porcentaje (0-100)"
                 keyboardType="numeric"
-                value={selectedItem?.porcentaje}
-                onChangeText={(text) =>
-                  setSelectedItem({ ...selectedItem, porcentaje: text })
-                }
+                value={newItem.porcentaje}
+                onChangeText={(t) => setNewItem({ ...newItem, porcentaje: t })}
               />
+            )}
+            {newItem.tipo === "reto" && (
+              <TextInput
+                style={styles.input}
+                placeholder="Miembros"
+                keyboardType="numeric"
+                value={newItem.miembros}
+                onChangeText={(t) => setNewItem({ ...newItem, miembros: t })}
+              />
+            )}
 
-              <View style={styles.modalButtons}>
-                <Pressable
-                  style={[styles.btn, styles.btnCancel]}
-                  onPress={() => setEditModalVisible(false)}
-                >
-                  <Text>Cancelar</Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.btn, styles.btnConfirm]}
-                  onPress={handleUpdate}
-                >
-                  <Text style={{ color: "#fff" }}>Guardar</Text>
-                </Pressable>
-              </View>
-            </View>
+            <TouchableOpacity style={styles.btnPrimary} onPress={handleCreate}>
+              <Text style={styles.btnPrimaryText}>Crear</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.btnClose}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.btnCloseText}>Cancelar</Text>
+            </TouchableOpacity>
           </View>
-        </Modal>
-      </SafeAreaView>
-    </LinearGradient>
+        </View>
+      </Modal>
+
+      {/* MODAL EDITAR */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Editar Tema</Text>
+            <TextInput
+              style={styles.input}
+              value={selectedItem?.titulo}
+              onChangeText={(t) =>
+                setSelectedItem({ ...selectedItem, titulo: t })
+              }
+            />
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={selectedItem?.porcentaje}
+              onChangeText={(t) =>
+                setSelectedItem({ ...selectedItem, porcentaje: t })
+              }
+            />
+            <TouchableOpacity style={styles.btnPrimary} onPress={handleUpdate}>
+              <Text style={styles.btnPrimaryText}>Guardar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.btnClose}
+              onPress={() => setEditModalVisible(false)}
+            >
+              <Text style={styles.btnCloseText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: { flex: 1 },
-  safeArea: { flex: 1 },
-  header: {
+  headerGradient: {
+    paddingTop: Platform.OS === "android" ? 40 : 0,
+    paddingBottom: 20,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  headerContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 10,
+    marginTop: 10,
   },
-  appTitle: { fontSize: 28, fontWeight: "bold", color: "#000" },
-  scrollView: { flex: 1 },
-  scrollContent: { paddingBottom: 80 },
-  sectionContainer: { marginTop: 20, paddingHorizontal: 20 },
+  headerSubtitle: {
+    color: "rgba(255,255,255,0.8)",
+    fontWeight: "600",
+    fontSize: 14,
+    letterSpacing: 1,
+  },
+  headerTitle: { color: "#fff", fontSize: 32, fontWeight: "800" },
+  iconBtn: { backgroundColor: "#fff", padding: 8, borderRadius: 12 },
+  section: { marginTop: 25 },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    paddingHorizontal: 20,
     marginBottom: 15,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#000",
-    marginBottom: 5,
-  },
-  hintText: {
-    fontSize: 10,
-    color: "#555",
-    marginBottom: 10,
-    fontStyle: "italic",
-  },
-  seeAllText: { color: "#005577", fontSize: 14, fontWeight: "600" },
-  horizontalList: { paddingRight: 20 },
-
-  // Card Estudiante
-  studentCard: {
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    padding: 15,
-    marginRight: 15,
     alignItems: "center",
-    width: 130,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  studentImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginBottom: 8,
-    backgroundColor: "#eee",
-  },
-  studentInfo: { alignItems: "center", marginBottom: 10 },
-  studentName: {
-    fontWeight: "bold",
-    fontSize: 14,
-    color: "#333",
-    textAlign: "center",
-  },
-  studentSubtext: { fontSize: 12, color: "#666", textAlign: "center" },
-  connectButton: {
-    backgroundColor: "#0099CC",
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+  sectionTitle: { fontSize: 18, fontWeight: "700", color: "#333" },
+  link: { color: "#0099CC", fontWeight: "600" },
+  empty: { color: "#999", fontStyle: "italic", marginLeft: 20 },
+
+  // Cards
+  cardEstudiante: {
+    backgroundColor: "#fff",
+    padding: 15,
     borderRadius: 20,
-    width: "100%",
-    alignItems: "center",
-  },
-  connectButtonText: { color: "#fff", fontSize: 12, fontWeight: "bold" },
-
-  // Temas
-  topicsList: {
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  topicContainer: { marginBottom: 15 },
-  topicHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 5,
-  },
-  topicTitle: { fontSize: 14, fontWeight: "600", color: "#333" },
-  topicPercent: { fontSize: 14, fontWeight: "bold", color: "#0099CC" },
-  progressBarBackground: {
-    height: 8,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  progressBarFill: { height: "100%", borderRadius: 4 },
-
-  // Retos
-  challengeCard: {
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    padding: 15,
+    width: 140,
     marginRight: 15,
-    width: 160,
+    alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
     elevation: 3,
-    justifyContent: "space-between",
   },
-  challengeIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  challengeTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 15,
-    height: 40,
-  },
-  challengeFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  challengeMembers: { fontSize: 10, color: "#888" },
-  joinButton: {
+  imgContainer: { marginBottom: 10 },
+  studentImage: {
+    width: 65,
+    height: 65,
+    borderRadius: 32.5,
     backgroundColor: "#f0f0f0",
-    paddingVertical: 4,
-    paddingHorizontal: 10,
+  },
+  onlineBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#4CD964",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  studentName: {
+    fontWeight: "700",
+    fontSize: 15,
+    color: "#333",
+    marginBottom: 2,
+  },
+  studentCareer: { color: "#888", fontSize: 11, marginBottom: 12 },
+  btnConnect: {
+    backgroundColor: "#E0F7FA",
+    paddingHorizontal: 16,
+    paddingVertical: 6,
     borderRadius: 12,
   },
-  joinButtonText: { fontSize: 10, fontWeight: "bold", color: "#333" },
-  emptyText: { color: "#666", fontStyle: "italic", marginVertical: 10 },
+  btnConnectText: { color: "#0099CC", fontWeight: "700", fontSize: 11 },
 
-  // Modales
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
+  cardTema: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 15,
+    flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalContent: {
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 20,
-    width: "85%",
+    marginBottom: 12,
     shadowColor: "#000",
-    elevation: 5,
+    shadowOpacity: 0.03,
+    elevation: 2,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
-    textAlign: "center",
+  temaIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: "#E0F7FA",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 15,
+  temaTitle: { fontWeight: "600", fontSize: 15, color: "#333" },
+  temaPercent: { fontWeight: "700", color: "#0099CC", fontSize: 14 },
+  progressBg: {
+    height: 6,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 3,
     width: "100%",
   },
-  label: { fontSize: 14, fontWeight: "600", marginBottom: 5, color: "#333" },
-  typeSelector: {
-    flexDirection: "row",
+  progressFill: { height: "100%", borderRadius: 3 },
+
+  cardReto: {
+    width: 160,
+    height: 170,
+    borderRadius: 24,
+    padding: 16,
+    marginRight: 15,
     justifyContent: "space-between",
-    marginBottom: 15,
   },
-  typeBtn: {
-    padding: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    flex: 1,
+  retoTop: { flexDirection: "row", justifyContent: "space-between" },
+  retoMembers: { color: "#fff", fontWeight: "700", fontSize: 12 },
+  retoTitle: { color: "#fff", fontSize: 18, fontWeight: "800" },
+  btnJoin: {
+    backgroundColor: "#fff",
+    paddingVertical: 8,
+    borderRadius: 12,
     alignItems: "center",
-    marginHorizontal: 2,
   },
-  typeBtnActive: { backgroundColor: "#0099CC", borderColor: "#0099CC" },
-  typeText: { fontSize: 12, color: "#333" },
-  typeTextActive: { color: "#fff", fontWeight: "bold" },
-  modalButtons: { flexDirection: "row", justifyContent: "space-between" },
-  btn: { padding: 12, borderRadius: 8, width: "45%", alignItems: "center" },
-  btnCancel: { backgroundColor: "#eee" },
-  btnConfirm: { backgroundColor: "#0099CC" },
+  btnJoinText: { fontWeight: "700", fontSize: 12 },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalCard: {
+    backgroundColor: "#fff",
+    width: "85%",
+    borderRadius: 24,
+    padding: 25,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  typeRow: {
+    flexDirection: "row",
+    marginBottom: 20,
+    backgroundColor: "#f5f5f5",
+    padding: 4,
+    borderRadius: 12,
+  },
+  typePill: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderRadius: 10,
+  },
+  typePillActive: { backgroundColor: "#fff", elevation: 2 },
+  typeText: { fontSize: 11, fontWeight: "600", color: "#999" },
+  typeTextActive: { color: "#0099CC" },
+  input: {
+    backgroundColor: "#f9f9f9",
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    height: 50,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  btnPrimary: {
+    backgroundColor: "#0099CC",
+    borderRadius: 14,
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 10,
+  },
+  btnPrimaryText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  btnClose: { marginTop: 15, alignItems: "center" },
+  btnCloseText: { color: "#666", fontWeight: "600" },
 });
