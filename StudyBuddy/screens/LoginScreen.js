@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import {
   View,
   Text,
@@ -16,13 +18,20 @@ export default function LoginScreen({ navigation }) {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    if (!usuario.trim() || !password.trim()) {
-      Alert.alert("Error", "Completa Usuario y Contraseña.");
-      return;
-    }
+  const handleLogin = async () => {
+  if (!usuario.trim() || !password.trim()) {
+    Alert.alert("Error", "Completa Usuario y Contraseña.");
+    return;
+  }
+
+  try {
+    await AsyncStorage.setItem("nombreUsuario", usuario);
     navigation.replace("Tabs");
-  };
+    
+  } catch (error) {
+    console.log("Error guardando usuario:", error);
+  }
+};
 
   return (
     <LinearGradient
