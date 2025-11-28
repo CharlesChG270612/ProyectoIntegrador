@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import {View,Text,TextInput,Image,TouchableOpacity,StyleSheet,SafeAreaView,Alert} from "react-native";
+import {View,Text,TextInput,Image,TouchableOpacity,StyleSheet,SafeAreaView,Alert,} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function AjustesScreen() {
   const [nombre, setNombre] = useState("");
@@ -37,52 +38,60 @@ export default function AjustesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.titulo}>Mi Perfil</Text>
-        <Ionicons name="notifications-outline" size={26} color="#000" />
-      </View>
+    <SafeAreaView style={{ flex: 1 }}>
+      <LinearGradient
+        colors={["#00f7b2", "#04e4d9", "#0fb8c4"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.gradient}
+      >
+        <View style={styles.header}>
+          <Text style={styles.titulo}>Mi Perfil</Text>
+          <Ionicons name="notifications-outline" size={26} color="#000" />
+        </View>
 
-      <View style={styles.imageContainer}>
-        <Image source={require("../assets/iconos/carlos.png")} style={styles.avatar} />
-        <TouchableOpacity style={styles.addIcon}>
-          <Ionicons name="add-circle" size={28} color="#000" />
-        </TouchableOpacity>
-      </View>
+        <View style={styles.imageContainer}>
+          <Image
+            source={require("../assets/iconos/carlos.png")}
+            style={styles.avatar}
+          />
+          <TouchableOpacity style={styles.addIcon}>
+            <Ionicons name="add-circle" size={28} color="#000" />
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.inputsContainer}>
-        <TextInput
-          style={[styles.input, { backgroundColor: "#ddd" }]}
-          placeholder="Nombre completo"
-          value={nombre}
-          editable={false}
-        />
+        <View style={styles.inputsContainer}>
+          <TextInput
+            style={[styles.input, { backgroundColor: "#ddd" }]}
+            placeholder="Nombre completo"
+            value={nombre}
+            editable={false}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Carrera"
+            value={carrera}
+            onChangeText={setCarrera}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Cuatrimestre"
+            value={cuatri}
+            onChangeText={setCuatri}
+          />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Carrera"
-          value={carrera}
-          onChangeText={setCarrera}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Cuatrimestre"
-          value={cuatri}
-          onChangeText={setCuatri}
-        />
-
-        <TouchableOpacity style={styles.saveButton} onPress={guardarCambios}>
-          <Text style={styles.saveButtonText}>Guardar cambios</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity style={styles.saveButton} onPress={guardarCambios}>
+            <Text style={styles.saveButtonText}>Guardar cambios</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  gradient: {
     flex: 1,
-    backgroundColor: "#00c3ff",
     alignItems: "center",
   },
   header: {
