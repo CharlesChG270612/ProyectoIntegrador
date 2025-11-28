@@ -27,7 +27,6 @@ export default function LoginScreen({ navigation }) {
   try {
     await AsyncStorage.setItem("nombreUsuario", usuario);
     navigation.replace("Tabs");
-    
   } catch (error) {
     console.log("Error guardando usuario:", error);
   }
